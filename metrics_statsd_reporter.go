@@ -42,7 +42,7 @@ func NewReporter(r metrics.Registry, client *statsd.Client, d time.Duration, opt
 		r = metrics.DefaultRegistry
 	}
 
-	percentiles := []float64{0.5, 0.75, 0.95, 0.99, 0.999}
+	percentiles := []float64{0.75, 0.95, 0.99, 0.999}
 	percentileNames, err := getPercentileNames(percentiles)
 	if err != nil {
 		return nil, err
@@ -116,7 +116,7 @@ func (r *StatsDReporter) FlushOnce() error {
 			r.Client.Gauge(name+".min", float64(ms.Min()), r.tags, 1)
 			r.Client.Gauge(name+".mean", ms.Mean(), r.tags, 1)
 			r.Client.Gauge(name+".stddev", ms.StdDev(), r.tags, 1)
-			r.Client.Gauge(name+".var", ms.Variance(), r.tags, 1)
+			r.Client.Gauge(name+".median", time.Duration(ms.Percentile(0.5)).Seconds()*1000, r.tags, 1)
 
 			if len(r.percentiles) > 0 {
 				values := ms.Percentiles(r.percentiles)
@@ -143,7 +143,7 @@ func (r *StatsDReporter) FlushOnce() error {
 			r.Client.Gauge(name+".mean", time.Duration(ms.Mean()).Seconds()*1000, r.tags, 1)
 			r.Client.Gauge(name+".stddev", time.Duration(ms.StdDev()).Seconds()*1000, r.tags, 1)
 
-			r.Client.Gauge(name+".median", time.Duration(ms.Percentiles(r.percentiles)[0]).Seconds()*1000, r.tags, 1)
+			r.Client.Gauge(name+".median", time.Duration(ms.Percentile(0.5)).Seconds()*1000, r.tags, 1)
 
 			r.Client.Gauge(name+".rate.1min", ms.Rate1(), r.tags, 1)
 			r.Client.Gauge(name+".rate.5min", ms.Rate5(), r.tags, 1)
